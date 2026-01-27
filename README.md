@@ -29,7 +29,7 @@ running build.bat makes the calendar_app.exe from the calendar_py.exe, so any ch
 
 build.bat must be in the same folder as calendar_app.py while running build.bat
 
-all libraries must be installed onto the computer prior to running build.bat
+all libraries in calendar_app.py must be installed onto the computer prior to running build.bat
 
 
 
