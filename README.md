@@ -1,6 +1,6 @@
 app build: 0.2 alpha build
 
-calendar_app.exe is simply the application that can be run immediately
+calendar_app.exe is simply the application that can be run immediately and is recommended to be run as administrator
 
 calendar_app.py is the script for the app itself and is for developers who want to change the code or do what they want with it
 
