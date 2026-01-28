@@ -9,7 +9,7 @@ some antiviruses may detect the exe as suspicious so antivirus should be turned 
 
 ## CALENDAR_APP.EXE
 
-calendar_app.exe is simply the application that can be run immediately and is for people who just wanna try the app out or use it for fun
+calendar_app.exe is simply the application that can be run immediately and is for people who just wanna try the app out
 
 (recommended to be run as administrator)
 
