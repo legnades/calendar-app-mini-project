@@ -5,9 +5,13 @@ from tkinter import messagebox
 from tkcalendar import Calendar
 from plyer import notification
 
-APP_FOLDER=os.path.join(os.getenv("LOCALAPPDATA"),"ReminderApp")
-os.makedirs(APP_FOLDER,exist_ok=True)
-DB_FILE=os.path.join(APP_FOLDER,"reminders.db")
+HOME = os.path.expanduser("~")
+if not HOME:
+    raise RuntimeError("Cannot determine home directory")
+
+APP_FOLDER = os.path.join(HOME, ".reminderapp")
+os.makedirs(APP_FOLDER, exist_ok=True)
+DB_FILE = os.path.join(APP_FOLDER, "reminders.db")
 
 conn=sqlite3.connect(DB_FILE,check_same_thread=False)
 c=conn.cursor()
