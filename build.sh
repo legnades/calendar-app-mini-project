@@ -23,14 +23,14 @@ fi
 # ----------------------------
 # Check tkinter
 # ----------------------------
+set +e
 python3 - <<EOF
-try:
-    import tkinter
-except ImportError:
-    import sys
-    sys.exit(1)
+import tkinter
 EOF
-if [ $? -ne 0 ]; then
+TK_OK=$?
+set -e
+
+if [ $TK_OK -ne 0 ]; then
     echo "ERROR: tkinter is missing. Install it with:"
     echo "  sudo apt install python3-tk"
     exit 1
@@ -41,12 +41,16 @@ fi
 # ----------------------------
 VENV_DIR="./qubify-venv"
 
+if [ -d "$VENV_DIR" ] && [ ! -f "$VENV_DIR/bin/activate" ]; then
+    echo "Broken virtual environment detected. Recreating..."
+    rm -rf "$VENV_DIR"
+fi
+
 if [ ! -d "$VENV_DIR" ]; then
     echo "Creating virtual environment..."
     python3 -m venv "$VENV_DIR"
 fi
 
-# Activate venv
 source "$VENV_DIR/bin/activate"
 
 # ----------------------------
@@ -111,4 +115,3 @@ fi
 deactivate || true
 echo
 read -p "Press ENTER to exit..."
-
