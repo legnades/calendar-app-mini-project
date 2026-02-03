@@ -37,6 +37,6 @@ all libraries in calendar_app.py must be installed onto the computer prior to ru
 
   -remove/add reminders at any specific date and time
   
-  -reminders show notifications when they pass
+  -reminders show notifications when they pass (notifications may not immediately show up, can take up to 30 seconds for the notification to show up)
   
   -has calendar and shows current day
