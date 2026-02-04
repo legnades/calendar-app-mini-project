@@ -1,117 +1,101 @@
 #!/bin/bash
-
 set -e
 
-echo "Building Qubify-ITs Prodlendar..."
+APP_NAME="Qubify-ITs_Prodlendar"
+PY_FILE="calendar_app.py"
+APPDIR="AppDir"
+VENV=".build-venv"
+
+echo "Building $APP_NAME AppImage..."
 echo
 
-# ----------------------------
-# Ensure we're in script directory
-# ----------------------------
 cd "$(dirname "$0")"
 
 # ----------------------------
-# Check Python
+# Check system deps
 # ----------------------------
-if ! command -v python3 >/dev/null 2>&1; then
-    echo "ERROR: Python 3 is not installed."
-    echo "Install it with:"
-    echo "  sudo apt update && sudo apt install python3 python3-pip python3-venv python3-tk"
+command -v python3 >/dev/null || { echo "python3 missing"; exit 1; }
+command -v python3-venv >/dev/null || {
+    echo "ERROR: python3-venv missing"
+    echo "Install with: sudo apt install python3-venv"
     exit 1
+}
+
+# ----------------------------
+# Create build venv
+# ----------------------------
+if [ ! -d "$VENV" ]; then
+    echo "Creating build virtual environment..."
+    python3 -m venv "$VENV"
 fi
 
-# ----------------------------
-# Check tkinter
-# ----------------------------
-set +e
-python3 - <<EOF
-import tkinter
-EOF
-TK_OK=$?
-set -e
+source "$VENV/bin/activate"
 
-if [ $TK_OK -ne 0 ]; then
-    echo "ERROR: tkinter is missing. Install it with:"
-    echo "  sudo apt install python3-tk"
-    exit 1
-fi
+pip install --upgrade pip
+pip install pyinstaller tkcalendar plyer
 
 # ----------------------------
-# Virtual environment
+# Clean old output
 # ----------------------------
-VENV_DIR="./qubify-venv"
-
-if [ -d "$VENV_DIR" ] && [ ! -f "$VENV_DIR/bin/activate" ]; then
-    echo "Broken virtual environment detected. Recreating..."
-    rm -rf "$VENV_DIR"
-fi
-
-if [ ! -d "$VENV_DIR" ]; then
-    echo "Creating virtual environment..."
-    python3 -m venv "$VENV_DIR"
-fi
-
-source "$VENV_DIR/bin/activate"
+rm -rf build dist "$APPDIR"
 
 # ----------------------------
-# Install required Python libraries inside venv
-# ----------------------------
-REQUIRED_LIBS=("tkcalendar" "plyer" "pyinstaller")
-for lib in "${REQUIRED_LIBS[@]}"; do
-    if ! python -c "import $lib" >/dev/null 2>&1; then
-        echo "Installing $lib in virtual environment..."
-        pip install --upgrade pip
-        pip install "$lib"
-    fi
-done
-
-# ----------------------------
-# Build with PyInstaller inside venv
+# PyInstaller build
 # ----------------------------
 echo "Running PyInstaller..."
-python -m PyInstaller \
+pyinstaller \
     --onefile \
     --windowed \
     --clean \
     --noconfirm \
-    --name "Qubify-ITs_Prodlendar" \
-    calendar_app.py
-
-echo
-echo "Build completed successfully."
-echo "Executable is located at ./dist/Qubify-ITs_Prodlendar"
-echo
+    --name "$APP_NAME" \
+    "$PY_FILE"
 
 # ----------------------------
-# Startup question
+# AppDir structure
 # ----------------------------
-read -p "Start Qubify-ITs Prodlendar on system startup? (yes/no): " STARTUP
+echo "Creating AppDir..."
+mkdir -p "$APPDIR/usr/bin"
+mkdir -p "$APPDIR/usr/share/applications"
 
-if [[ "$STARTUP" == "yes" ]]; then
-    echo "Enabling startup..."
-    mkdir -p ~/.config/systemd/user
-    SERVICE_FILE=~/.config/systemd/user/qubify-prodlendar.service
-    cat > "$SERVICE_FILE" <<EOF
-[Unit]
-Description=Qubify-ITs Prodlendar
+cp "dist/$APP_NAME" "$APPDIR/usr/bin/$APP_NAME"
+chmod +x "$APPDIR/usr/bin/$APP_NAME"
 
-[Service]
-ExecStart=$(pwd)/dist/Qubify-ITs_Prodlendar
-Restart=on-failure
-
-[Install]
-WantedBy=default.target
+# Desktop entry
+cat > "$APPDIR/$APP_NAME.desktop" <<EOF
+[Desktop Entry]
+Type=Application
+Name=$APP_NAME
+Exec=$APP_NAME
+Terminal=false
+Categories=Utility;
 EOF
-    systemctl --user daemon-reload
-    systemctl --user enable qubify-prodlendar.service
-    echo "Startup enabled successfully."
-else
-    echo "Startup disabled."
+
+# AppRun
+cat > "$APPDIR/AppRun" <<EOF
+#!/bin/sh
+HERE="\$(dirname "\$(readlink -f "\$0")")"
+exec "\$HERE/usr/bin/$APP_NAME"
+EOF
+chmod +x "$APPDIR/AppRun"
+
+# ----------------------------
+# AppImage tool
+# ----------------------------
+if [ ! -f appimagetool.AppImage ]; then
+    echo "Downloading appimagetool..."
+    wget -q https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -O appimagetool.AppImage
+    chmod +x appimagetool.AppImage
 fi
 
+ARCH=x86_64 ./appimagetool.AppImage "$APPDIR"
+
 # ----------------------------
-# Deactivate venv and finish
+# Cleanup
 # ----------------------------
-deactivate || true
+deactivate
+
 echo
-read -p "Press ENTER to exit..."
+echo "DONE"
+ls *.AppImage
+echo
