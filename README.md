@@ -1,3 +1,9 @@
+read windows versions desc before reading this one
+
+if you want to simply use the app or try it out, just download "Qubify-ITs_Prodlendar" and open it.
+
+but if you want to do the installation for whatever reason (for example, changing the .py code) then the instructions are below
+
 # wip installation instructions:
 
 1. -make folder named "calendar-app-ubuntu" in home folder
