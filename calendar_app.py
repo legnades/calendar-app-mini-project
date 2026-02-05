@@ -1,42 +1,82 @@
-import os, sqlite3, threading, time
+import os, sqlite3, threading, time, sys, subprocess
 from datetime import datetime
 from tkinter import *
 from tkinter import messagebox
 from tkcalendar import Calendar
 from plyer import notification
+import socket
 
+#single instance + reopen existing instance
+APP_ID = "QUBIFY_PRODLENDAR_SINGLE_INSTANCE"
+PORT = 50555  # any high unused port
+
+if os.name == "nt":
+    try:
+        #try to create an instance of the app, if it fails, another instance is running
+        server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server.bind(("127.0.0.1", PORT))
+        server.listen(1)
+        IS_PRIMARY = True
+    except OSError:
+        #another instance exists, signal it to show and exit
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.connect(("127.0.0.1", PORT))
+            s.send(b"SHOW")
+            s.close()
+        except:
+            pass
+        sys.exit(0)
+else:
+    IS_PRIMARY = True
+
+def listen_for_show():
+    while True:
+        conn, _ = server.accept()
+        data = conn.recv(1024)
+        if data == b"SHOW":
+            root.after(0, restore_window)
+        conn.close()
+
+#database setup
 APP_FOLDER = os.path.join(os.getenv("LOCALAPPDATA"), "ReminderApp")
 os.makedirs(APP_FOLDER, exist_ok=True)
 DB_FILE = os.path.join(APP_FOLDER, "reminders.db")
 
 conn = sqlite3.connect(DB_FILE, check_same_thread=False)
 c = conn.cursor()
-c.execute("""CREATE TABLE IF NOT EXISTS reminders(
-id INTEGER PRIMARY KEY, datetime TEXT, text TEXT, status TEXT DEFAULT 'pending')""")
+c.execute("""
+CREATE TABLE IF NOT EXISTS reminders(
+id INTEGER PRIMARY KEY,
+datetime TEXT,
+text TEXT,
+status TEXT DEFAULT 'pending'
+)
+""")
+
 try:
     c.execute("SELECT status FROM reminders LIMIT 1")
 except:
     c.execute("ALTER TABLE reminders ADD COLUMN status TEXT DEFAULT 'pending'")
+
 conn.commit()
 
+#ui
 root = Tk()
 root.title("Qubify-IT's Prodlendar")
 root.geometry("950x600")
 
-# top bar
 top = Frame(root)
 top.pack(fill=X)
 
 toggle_btn = Button(top, text="Show reminders")
 toggle_btn.pack(side=RIGHT, padx=10, pady=5)
 
-# main panels
 left = Frame(root)
 left.pack(side=LEFT, fill=BOTH, expand=True)
 
 right = Frame(root, width=420)
 
-# left panel
 cal = Calendar(left, date_pattern="yyyy-mm-dd")
 cal.pack(pady=10)
 
@@ -53,10 +93,7 @@ add_btn.pack()
 status_label = Label(left, text="", fg="green")
 status_label.pack(pady=(4, 0))
 
-# right panel layout
-right_top = Frame(right)
-right_top.pack(fill=X)
-
+#reminder list
 right_body = Frame(right)
 right_body.pack(fill=BOTH, expand=True)
 
@@ -84,12 +121,11 @@ canvas.bind_all("<MouseWheel>", on_mousewheel)
 
 Button(right_bottom, text="Delete Selected", command=lambda: delete_sel()).pack(pady=8)
 
-# reminder system
 selected_ids = set()
 cards = []
 
 def select_card(event, rid, card):
-    if event.state & 0x0004:  # Ctrl
+    if event.state & 0x0004:  #ctrl key is held
         if rid in selected_ids:
             selected_ids.remove(rid)
             bg = "#f5f5f5"
@@ -131,6 +167,7 @@ def load():
 
         cards.append((card, rid))
 
+#don't clear text after adding, to allow quick multiple entries
 def add():
     raw = f"{cal.get_date()} {time_entry.get().strip()}"
     try:
@@ -150,7 +187,7 @@ def add():
     )
     conn.commit()
 
-    note_entry.delete("1.0", END)
+    #text intentionally not cleared to allow quick multiple entries, time and focus remain
     note_entry.focus()
 
     status_label.config(text="Reminder added")
@@ -184,6 +221,11 @@ def hide():
 
 root.protocol("WM_DELETE_WINDOW", hide)
 
+def restore_window():
+    root.deiconify()
+    root.lift()
+    root.focus_force()
+
 def checker():
     while True:
         now = datetime.now()
@@ -195,5 +237,6 @@ def checker():
                 root.after(0, load)
         time.sleep(5)
 
+threading.Thread(target=listen_for_show, daemon=True).start()
 threading.Thread(target=checker, daemon=True).start()
 root.mainloop()
