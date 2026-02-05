@@ -1,4 +1,4 @@
-# Qubify-IT's Prodlendar (name will be changed)
+# Qubify-IT's Prodlendar (to be changed)
 
 app build: alpha build 0.2 27.1.2026
 
