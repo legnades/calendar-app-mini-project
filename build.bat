@@ -83,7 +83,7 @@ IF NOT EXIST "%DIST_DIR%\calendar_app.exe" (
 REM ===============================
 REM RENAME EXE
 REM ===============================
-ren "%DIST_DIR%\calendar_app.exe" "%EXE_NAME%"
+ren "dist\calendar_app.exe" "%EXE_NAME%"
 
 echo.
 echo Build completed successfully.
