@@ -1,4 +1,4 @@
-﻿import os, sqlite3, threading, time
+import os, sqlite3, threading, time
 from datetime import datetime
 from tkinter import *
 from tkinter import messagebox
