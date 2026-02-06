@@ -47,7 +47,7 @@ for %%L in (%REQUIRED_LIBS%) do (
 
 if defined MISSING_LIBS (
     echo ERROR: The following Python libraries are missing:%MISSING_LIBS%
-    echo Install them using:
+    echo Install them in Windows PowerShell using:
     for %%L in (%REQUIRED_LIBS%) do (
         echo pip install %%L
     )
