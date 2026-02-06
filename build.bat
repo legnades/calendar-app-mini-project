@@ -6,7 +6,7 @@ REM VARIABLES
 REM ===============================
 set "APP_NAME=Qubify-ITs Prodlendar"
 set "PYTHON_EXE=python"
-set "REQUIRED_LIBS=plyer tkcalendar pystray pillow"
+set "REQUIRED_LIBS=plyer tkcalendar pystray PIL"
 set "EXE_NAME=Qubify-ITs Prodlendar.exe"
 set "DIST_DIR=dist"
 set "BUILD_DIR=build"
@@ -47,10 +47,11 @@ for %%L in (%REQUIRED_LIBS%) do (
 
 if defined MISSING_LIBS (
     echo ERROR: The following Python libraries are missing:%MISSING_LIBS%
-    echo Install them in Windows PowerShell using:
-    for %%L in (%REQUIRED_LIBS%) do (
-        echo pip install %%L
-    )
+    echo Install them in Windows Powershell using:
+    echo pip install plyer
+    echo pip install tkcalendar
+    echo pip install pystray
+    echo pip install pillow
     pause
     exit /b
 )
@@ -136,3 +137,4 @@ IF EXIST "%LNK_PATH%" (
 
 echo.
 pause
+
