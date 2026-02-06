@@ -2,11 +2,11 @@
 setlocal EnableExtensions EnableDelayedExpansion
 
 REM ===============================
-REM CONFIGURATION
+REM VARIABLES
 REM ===============================
 set "APP_NAME=Qubify-ITs Prodlendar"
 set "PYTHON_EXE=python"
-set "REQUIRED_LIBS=plyer tkcalendar"
+set "REQUIRED_LIBS=plyer tkcalendar pystray pillow"
 set "EXE_NAME=Qubify-ITs Prodlendar.exe"
 set "DIST_DIR=dist"
 set "BUILD_DIR=build"
@@ -72,6 +72,10 @@ echo.
  --hidden-import=plyer.platforms ^
  --hidden-import=plyer.platforms.win ^
  --hidden-import=plyer.platforms.win.notification ^
+ --hidden-import=pystray ^
+ --hidden-import=PIL ^
+ --hidden-import=PIL.Image ^
+ --hidden-import=PIL.ImageDraw ^
  calendar_app.py
 
 IF NOT EXIST "%DIST_DIR%\calendar_app.exe" (
@@ -90,7 +94,7 @@ echo Build completed successfully.
 echo.
 
 REM ===============================
-REM ASK FOR STARTUP SHORTCUT
+REM STARTUP PROMPT
 REM ===============================
 set /p STARTUP=Start %APP_NAME% on Windows startup? (yes/no): 
 
@@ -103,17 +107,15 @@ IF /I "%STARTUP%" NEQ "yes" (
 echo Enabling startup...
 
 REM ===============================
-REM CREATE SHORTCUT
+REM CREATE STARTUP SHORTCUT
 REM ===============================
 set "EXE_PATH=%CD%\%DIST_DIR%\%EXE_NAME%"
 set "STARTUP_DIR=%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup"
 set "LNK_PATH=%STARTUP_DIR%\%EXE_NAME%.lnk"
 set "PS_FILE=%TEMP%\create_startup_shortcut.ps1"
 
-REM Make sure Startup folder exists
 if not exist "%STARTUP_DIR%" mkdir "%STARTUP_DIR%"
 
-REM Create PowerShell script
 (
 echo $w = New-Object -ComObject WScript.Shell
 echo $s = $w.CreateShortcut("%LNK_PATH%")
@@ -122,10 +124,8 @@ echo $s.WorkingDirectory = "%CD%\%DIST_DIR%"
 echo $s.Save()
 ) > "%PS_FILE%"
 
-REM Run PowerShell
 powershell -NoProfile -ExecutionPolicy Bypass -File "%PS_FILE%"
 
-REM Cleanup
 del "%PS_FILE%" >nul 2>&1
 
 IF EXIST "%LNK_PATH%" (
